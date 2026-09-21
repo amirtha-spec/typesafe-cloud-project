@@ -24,22 +24,45 @@ why:
   - Major impact (severity 2.70 of 3).
 ```
 
-## Quick start
+## Running locally
+
+Requires **Node 22.18 or newer** — the project runs TypeScript directly via
+Node's built-in type stripping, so there is no build step. `npm install` refuses
+older versions with a clear message (`engine-strict`). On Node 20, either
+upgrade or run through a loader: `npx tsx src/cli.ts --body "..."`.
 
 ```bash
-npm install
-
-# Offline: local mock, no API key or network needed.
-node scripts/mock-server.ts &
-TYPESAFE_API_KEY=local-mock TYPESAFE_BASE_URL=http://127.0.0.1:8787 \
-  npm run triage -- --body "I was charged twice"
-
-# Live: real API. No TYPESAFE_BASE_URL — the SDK defaults to api.typesafe.ai.
-export TYPESAFE_API_KEY=sk-...   # from https://console.typesafe.ai/keys
-npm run triage -- --body "I was charged twice"
+git clone https://github.com/amirtha-spec/typesafe-cloud-project
+cd typesafe-cloud-project
+git checkout claude/intelligent-darwin-q0yypj
+npm ci                 # or npm install
+npm test               # 13 tests, no network, no key
+npm run typecheck
 ```
 
-`npm test` (13 tests, no network) and `npm run typecheck` both pass.
+### Against the real API
+
+```bash
+export TYPESAFE_API_KEY=sk-...      # https://console.typesafe.ai/keys
+npm run triage -- --subject "Site down" --body "500s on every page"
+echo "you billed us for 40 seats, we have 12" | npm run triage
+```
+
+Leave `TYPESAFE_BASE_URL` unset — the SDK defaults to `https://api.typesafe.ai`.
+Set `TYPESAFE_LOG_LEVEL=info` to log request summaries, or `debug` to include
+headers and bodies (bodies are **not** redacted, so avoid `debug` on real
+customer tickets).
+
+### Without a key or network
+
+```bash
+npm run mock &                      # local stand-in on 127.0.0.1:8787
+TYPESAFE_API_KEY=local-mock TYPESAFE_BASE_URL=http://127.0.0.1:8787 \
+  npm run triage -- --body "I was charged twice"
+```
+
+Verified from a clean clone on Node v22.22.2: `npm ci`, 13/13 tests, clean
+typecheck, and both CLI paths against the mock.
 
 ## What to review
 
