@@ -10,48 +10,39 @@ supplies semantic judgment where plain code can't.
 The three primitives are **Choice** (pick one of a defined set), **Noul** (does this
 condition hold), and **Score** (degree along a described dimension).
 
-## What's set up here
+## The agent skill
 
-The TypeSafe agent skill is vendored into [`.claude/skills/typesafe-ai/`](.claude/skills/typesafe-ai/).
-Claude Code loads project skills automatically, so it's active in any session opened
-on this repo — web or local — with nothing to install.
+TypeSafe publishes an agent skill that teaches Claude its API, patterns, and
+cookbooks. This repo doesn't vendor it — it's installed at the account level, so
+it's available in every session without anything committed here.
 
-Ask for it in plain language ("use TypeSafe to route these tickets by department"),
-or invoke it directly with `/typesafe-ai`.
-
-### Why vendored instead of installed as a plugin
-
-Upstream ships this as a Claude Code plugin:
+To install it elsewhere, as a Claude Code plugin:
 
 ```bash
 claude plugin marketplace add typesafe-ai/skills
 claude plugin install typesafe@typesafe-ai
 ```
 
-That works locally, but the repo-committed equivalent
-(`extraKnownMarketplaces` + `enabledPlugins` in `.claude/settings.json`) is
-silently ignored in Claude Code web sessions —
-[anthropics/claude-code#78119](https://github.com/anthropics/claude-code/issues/78119),
-still open. Since this repo exists for web use, the skill is committed directly
-instead. No marketplace, no per-session install step.
-
-Refresh the vendored copy from upstream with:
+Or for other agents:
 
 ```bash
-./scripts/update-typesafe-skill.sh
+npx skills add typesafe-ai/skills --skill typesafe-ai
 ```
+
+> **Don't try to ship it via committed plugin config.** The documented
+> team-distribution route — `extraKnownMarketplaces` + `enabledPlugins` in
+> `.claude/settings.json` — is silently ignored in Claude Code web sessions
+> ([anthropics/claude-code#78119](https://github.com/anthropics/claude-code/issues/78119),
+> open). Committing the skill to `.claude/skills/` does work, if you ever need
+> it to travel with the repo for someone without account-level access.
 
 ## Calling Jev from code
 
-Get an API key from the TypeSafe dashboard and export it:
+Get an API key from the TypeSafe console (`console.typesafe.ai/settings/keys`),
+then:
 
 ```bash
 export TYPESAFE_API_KEY=...
-```
-
-Python:
-
-```bash
 uv add typesafe-sdk
 ```
 
@@ -72,20 +63,30 @@ with TypeSafeClient() as client:
 print(response.choices["category"].choice)
 ```
 
-Keep the key server-side in web apps.
+Both SDKs read `TYPESAFE_API_KEY` from the environment. Keep the key server-side
+in web apps.
 
-## Known limitation in this environment
+## Cloud environment setup
 
 The skill treats <https://docs.typesafe.ai> as its source of truth and fetches
-pages live while it works. That host is currently **blocked by this environment's
-network egress policy**, so the skill runs on its built-in guidance alone and
-can't pull current API contracts, cookbooks, or SDK references.
+pages live while it works, so the cloud environment has to allow that host.
 
-To lift it, add `docs.typesafe.ai` to the allowed domains for this environment's
-network policy — see the
-[Claude Code on the web docs](https://code.claude.com/docs/en/claude-code-on-the-web).
+Open the environment selector at [claude.ai/code](https://claude.ai/code) — the
+cloud icon above the message box, there's no settings URL — hover the environment
+and click the gear. Then:
 
-## License
+- **Network access** → **Custom**, with these in **Allowed domains**:
+  ```
+  typesafe.ai
+  *.typesafe.ai
+  ```
+  Tick **"Also include default list of common package managers"**, or you'll drop
+  npm, PyPI, and the rest of the defaults.
+- **Environment variables** → `TYPESAFE_API_KEY=...`, or on Pro/Max use
+  **API credentials** so the key never enters the session (Bearer, allowed website
+  `api.typesafe.ai`).
 
-The vendored skill is MIT, copyright TypeSafe AI — see
-[`.claude/skills/typesafe-ai/LICENSE`](.claude/skills/typesafe-ai/LICENSE).
+Environment config is read at session startup, so start a new session afterward.
+
+See [Configure cloud environments](https://code.claude.com/docs/en/cloud-environments)
+for the full reference.
