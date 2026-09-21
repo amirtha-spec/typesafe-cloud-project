@@ -1,0 +1,23 @@
+{
+  "name": "typesafe-cloud-project",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Minimal TypeSafe AI (Jev) TypeScript example.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "example": "tsx src/example.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@typesafe-ai/sdk": "^0.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
